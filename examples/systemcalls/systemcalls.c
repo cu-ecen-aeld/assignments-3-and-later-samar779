@@ -1,5 +1,11 @@
 #include "systemcalls.h"
-
+#include <fcntl.h>
+#include <unistd.h>
+ #include <stdio.h>  // perror()
+ #include <stdlib.h> // exit(), EXIT_SUCCESS, EXIT_FAILURE
+ #include <unistd.h> // fork()
+ #include <sys/wait.h>
+ #include <sys/types.h>
 /**
  * @param cmd the command to execute with system()
  * @return true if the command in @param cmd was executed
@@ -16,6 +22,12 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+int result = system(cmd);
+    if (result == -1)
+    {
+        // Erreur lors de l'exécution de la commande système
+        return false;
+    }
 
     return true;
 }
@@ -36,10 +48,12 @@ bool do_system(const char *cmd)
 
 bool do_exec(int count, ...)
 {
+
     va_list args;
     va_start(args, count);
     char * command[count+1];
     int i;
+     fflush(stdout);
     for(i=0; i<count; i++)
     {
         command[i] = va_arg(args, char *);
@@ -58,6 +72,45 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+
+pid_t pid = fork();
+
+    if (pid == -1)
+    {
+        // Error occurred while forking
+        perror("Fork failed");
+        return false;
+    }
+    else if (pid == 0)
+    {
+        // Child process
+        execv(command[0], command);
+        // execv returns only if an error occurred
+        perror("Execv failed");
+        exit(1);
+    }
+    else
+    {
+        // Parent process
+        int status;
+        wait(&status);
+        if (WIFEXITED(status))
+        {
+            int exit_status = WEXITSTATUS(status);
+            if (exit_status != 0)
+            {
+                // Child process exited with a non-zero status
+                printf("Command execution failed with exit status: %d\n", exit_status);
+                return false;
+            }
+        }
+        else
+        {
+            // Child process exited abnormally
+            printf("Command execution failed\n");
+            return false;
+        }
+    }
 
     va_end(args);
 
@@ -92,8 +145,31 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+outputfile = "redirected.txt";
+// Open the output file
+    int fd = open(outputfile, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+    if (fd == -1) {
+        perror("Error opening output file");
+        va_end(args);
+        return false;
+    }
+
+    // Redirect stdout to the output file
+    if (dup2(fd, STDOUT_FILENO) == -1) {
+        perror("Error redirecting stdout");
+        close(fd);
+        va_end(args);
+        return false;
+    }
+
+    close(fd); // Close the original file descriptor
+
+    // Execute the command
+    execv(command[0], command);
+
+    // If execv returns, an error occurred
+    perror("Error executing command");
 
     va_end(args);
-
-    return true;
+    return false;
 }
