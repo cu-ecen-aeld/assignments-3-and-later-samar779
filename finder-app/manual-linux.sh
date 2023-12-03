@@ -63,9 +63,13 @@ if [ ! -e ${OUTDIR}/linux/arch/${ARCH}/boot/Image ]; then
     export PATH=${PATH}:${OUTDIR}/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/bin
 
     #STEP1: Install necessary packages
-    sudo apt-get update && apt-get install -y --no-install-recommends \
-    bc git u-boot-tools kmod cpio flex bison libssl-dev psmisc fakeroot && \
-    xz-utils build-essential ncurses-dev libelf-dev bsdmainutils && \
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends bc git u-boot-tools kmod cpio flex bison libssl-dev psmisc fakeroot
+    sudo apt-get install -y xz-utils
+    sudo apt-get install -y build-essential
+    sudo apt-get install -y ncurses-dev
+    sudo apt-get install -y libelf-dev
+    sudo apt-get install -y bsdmainutils
     sudo apt-get install -y qemu-system-arm
 
     #STEP2_a): Build kernel deep clean, remove any .config file
@@ -124,14 +128,17 @@ make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 
 echo "Library dependencies"
-${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "program interpreter"
-${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
+#${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "program interpreter"
+#${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
 
 # DONE: Add library dependencies to rootfs
-cp ${OUTDIR}/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64/libc.so.6
-cp ${OUTDIR}/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64/libm.so.6
-cp ${OUTDIR}/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64/libresolv.so.2
-cp ${OUTDIR}/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib/ld-linux-aarch64.so.1
+${CROSS_COMPILE}readelf -a /usr/lib/initramfs-tools/bin/busybox | grep "program interpreter"
+${CROSS_COMPILE}readelf -a /usr/lib/initramfs-tools/bin/busybox | grep "Shared library"
+
+cp /home/samar/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib/
+cp /home/samar/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64/
+cp /home/samar/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64/
+cp /home/samar/install/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64/
 
 # DONE: Make device nodes
 cd ${OUTDIR}/rootfs
