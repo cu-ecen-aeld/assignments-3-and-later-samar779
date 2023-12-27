@@ -93,7 +93,6 @@ fi
 echo "Adding the Image in outdir"
 cp ${OUTDIR}/linux/arch/${ARCH}/boot/Image ${OUTDIR}/Image
 
-
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
 
@@ -159,6 +158,9 @@ cp -r  ${OUTDIR}/conf ${OUTDIR}/rootfs/home/conf
 cp ${OUTDIR}/finder-app/writer  ${OUTDIR}/rootfs/home/writer
 cp -r ${OUTDIR}/finder-app/finder.sh  ${OUTDIR}/rootfs/home/
 cp -r ${OUTDIR}/finder-app/finder-test.sh  ${OUTDIR}/rootfs/home/
+
+# Copy autorun-qemu.sh to rootfs/home directory
+cp -r ${OUTDIR}/finder-app/autorun-qemu.sh ${OUTDIR}/rootfs/home
 
 # DONE: Chown the root directory
 sudo chown -R root:root ${OUTDIR}/rootfs/
